@@ -1,0 +1,4 @@
+# Project exclude paths
+/target/
+.attach_pid30025
+.attach_pid31024
