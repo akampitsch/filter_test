@@ -1,5 +1,7 @@
 package com.cyansecurity.filter.dns;
 
+import com.cyansecurity.filter.util.LogUtils;
+import io.cucumber.core.api.Scenario;
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
@@ -17,6 +19,7 @@ public class DnsStepDefs
 {
     private static final Logger    logger    = LogManager.getLogger ();
     private              DnsServer dnsServer = new DnsServer ();
+    private              Scenario  scenario;
 
     public DnsStepDefs ()
         throws UnknownHostException
@@ -24,9 +27,10 @@ public class DnsStepDefs
     }
 
     @Before
-    public void this_happens_before_each_scenario ()
+    public void this_happens_before_each_scenario (Scenario scenario)
     {
         logger.info ("This is the before hook intaqt doesn't even have.");
+        this.scenario = scenario;
     }
 
     @After
@@ -39,6 +43,7 @@ public class DnsStepDefs
     public void use_nameserver_hostname (String hostname)
         throws UnknownHostException
     {
+        //this does not end up in report
         logger.info ("Setting Nameserver to {}", hostname);
         dnsServer = new DnsServer (hostname);
     }
@@ -47,11 +52,13 @@ public class DnsStepDefs
     public void lookup_by_hostname (String hostname)
         throws UnknownHostException
     {
-        final List<InetAddress> addresses;
+        List<InetAddress> addresses = null;
 
         logger.info ("Starting lookup for {}", hostname);
         addresses = dnsServer.lookupByHostname (hostname);
         logger.debug ("lookupByHostname returned: {}", addresses);
+
+        assert addresses != null;
         assertThat (addresses.size ()).as ("Check that Address List is not empty.").isNotEqualTo (0);
         assertThat (addresses).extracting (InetAddress::getHostName).contains (hostname);
         logger.info ("Found address in list of address {}", addresses);
@@ -63,7 +70,8 @@ public class DnsStepDefs
     {
         final List<InetAddress> addresses;
 
-        logger.info ("Starting lookup for {}", ipAddr);
+        //this should end up in report
+        LogUtils.info (this.scenario, this.getClass (), "Setting NameServer to " + ipAddr);
         addresses = dnsServer.lookupByIP (ipAddr);
         assertThat (addresses.size ()).as ("Check that Address List is not empty.").isNotEqualTo (0);
         assertThat (addresses).extracting (InetAddress::getHostAddress).contains (ipAddr);
